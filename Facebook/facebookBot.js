@@ -85,7 +85,7 @@ router.post("/webhook/", function (req, res) {
     res.sendStatus(200);
   }
 });
-checkForNewComments("103450344641549_182360956750487");
+checkForNewComments("103450344641549_182366933416556");
 async function getCommentsFromPost(postId) {
   try {
     let comments = await axios({
@@ -110,11 +110,11 @@ async function checkForNewComments(postId) {
         lastCommentsLength = comments.length;
         replyToComment(
           comments[0].id,
-          "Bienvenido. Soy el asistente de Tesis para inteligentes 🤗"
+          "Bienvenido. Soy el asistente de Tesis para inteligentes 🤗. Puedes encontrar la plantilla de matriz de consistencia aquí https://drive.google.com/file/d/1wzo8UdNA0kuAZhwUpJ-qMpW79GThBM6V/view?usp=sharing"
         );
       }
     } catch (error) {
-      console.log(err);
+      console.log(error);
     } finally {
       await timeout(5000);
     }
@@ -135,8 +135,9 @@ async function receivedComment(event) {
   let msg = "";
   //handle Posts
   switch (postId) {
-    case "103450344641549_182360956750487":
-      msg = "Bienvenido. Soy el asistente de Tesis para inteligentes 🤗";
+    case "103450344641549_182366933416556":
+      msg =
+        "Bienvenido. Soy el asistente de Tesis para inteligentes 🤗. Puedes encontrar la plantilla de matriz de consistencia aquí https://drive.google.com/file/d/1wzo8UdNA0kuAZhwUpJ-qMpW79GThBM6V/view?usp=sharing";
       await replyToComment(commentId, msg);
       break;
     default:
