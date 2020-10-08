@@ -33,6 +33,7 @@ if (!config.FB_APP_SECRET) {
 }
 
 const sessionIds = new Map();
+let lastCommentsLength = 0;
 
 // for Facebook verification
 router.get("/webhook/", function (req, res) {
@@ -59,18 +60,24 @@ router.post("/webhook/", function (req, res) {
       var timeOfEvent = pageEntry.time;
 
       // Iterate over each messaging event
-      pageEntry.messaging.forEach(function (messagingEvent) {
-        if (messagingEvent.message) {
-          receivedMessage(messagingEvent);
-        } else if (messagingEvent.postback) {
-          receivedPostback(messagingEvent);
-        } else {
-          console.log(
-            "Webhook received unknown messagingEvent: ",
-            messagingEvent
-          );
+      if (pageEntry.hasOwnProperty("changes")) {
+        if (pageEntry.changes[0].field === "feed") {
+          receivedComment(pageEntry.changes[0].value);
         }
-      });
+      } else {
+        pageEntry.messaging.forEach(function (messagingEvent) {
+          if (messagingEvent.message) {
+            receivedMessage(messagingEvent);
+          } else if (messagingEvent.postback) {
+            receivedPostback(messagingEvent);
+          } else {
+            console.log(
+              "Webhook received unknown messagingEvent: ",
+              messagingEvent
+            );
+          }
+        });
+      }
     });
 
     // Assume all went well.
@@ -78,6 +85,78 @@ router.post("/webhook/", function (req, res) {
     res.sendStatus(200);
   }
 });
+checkForNewComments("103450344641549_182360956750487");
+async function getCommentsFromPost(postId) {
+  try {
+    let comments = await axios({
+      method: "get",
+      url:
+        "https://graph.facebook.com/v6.0/" +
+        postId +
+        "/comments?order=reverse_chronological&access_token=" +
+        config.FB_PAGE_TOKEN,
+    });
+    return comments.data.data;
+  } catch (error) {
+    throw Error(error);
+  }
+}
+
+async function checkForNewComments(postId) {
+  while (true) {
+    try {
+      let comments = await getCommentsFromPost(postId);
+      if (comments.length > lastCommentsLength) {
+        lastCommentsLength = comments.length;
+        replyToComment(
+          comments[0].id,
+          "Bienvenido. Soy el asistente de Tesis para inteligentes 🤗"
+        );
+      }
+    } catch (error) {
+      console.log(err);
+    } finally {
+      await timeout(5000);
+    }
+  }
+}
+
+async function timeout(millis) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, millis);
+  });
+}
+
+async function receivedComment(event) {
+  let postId = event.post_id;
+  let commentId = event.comment_id;
+  let senderId = event.from.id;
+  let senderMessage = event.message;
+  let msg = "";
+  //handle Posts
+  switch (postId) {
+    case "103450344641549_182360956750487":
+      msg = "Bienvenido. Soy el asistente de Tesis para inteligentes 🤗";
+      await replyToComment(commentId, msg);
+      break;
+    default:
+      msg = "Bienvenido! gracias por comentar nuestras publicaciones";
+      await replyToComment(commentId, msg);
+      break;
+  }
+}
+
+async function replyToComment(commentId, msg) {
+  var messageData = {
+    recipient: {
+      comment_id: commentId,
+    },
+    message: {
+      text: msg,
+    },
+  };
+  await callSendAPI(messageData);
+}
 
 async function receivedMessage(event) {
   var senderId = event.sender.id;
@@ -122,7 +201,6 @@ function handleMessageAttachments(messageAttachments, senderId) {
   //for now just reply
   sendTextMessage(senderId, "Archivo adjunto recibido... gracias! .");
 }
-
 async function setSessionAndUser(senderId) {
   try {
     if (!sessionIds.has(senderId)) {
