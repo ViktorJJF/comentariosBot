@@ -51,6 +51,7 @@ router.get("/webhook/", function (req, res) {
 //for webhook facebook
 router.post("/webhook/", function (req, res) {
   var data = req.body;
+  console.log("se recibio esta data: ", JSON.stringify(data, null, " "));
   // Make sure this is a page subscription
   if (data.object == "page") {
     // Iterate over each entry
@@ -85,7 +86,6 @@ router.post("/webhook/", function (req, res) {
     res.sendStatus(200);
   }
 });
-checkForNewComments("103450344641549_182366933416556");
 async function getCommentsFromPost(postId) {
   try {
     let comments = await axios({
@@ -128,6 +128,7 @@ async function timeout(millis) {
 }
 
 async function receivedComment(event) {
+  console.log(event);
   let postId = event.post_id;
   let commentId = event.comment_id;
   let senderId = event.from.id;
@@ -141,7 +142,10 @@ async function receivedComment(event) {
       await replyToComment(commentId, msg);
       break;
     default:
-      msg = "Bienvenido! gracias por comentar nuestras publicaciones";
+      msg =
+        "Tu comentario fue: " +
+        senderMessage +
+        "\nMuchas gracias por comentar nuestras publicaciones";
       await replyToComment(commentId, msg);
       break;
   }
@@ -153,7 +157,7 @@ async function replyToComment(commentId, msg) {
       comment_id: commentId,
     },
     message: {
-      text: msg,
+      text: msg.replace(/\\n/g, "\n"),
     },
   };
   await callSendAPI(messageData);
@@ -424,7 +428,7 @@ async function sendTextMessage(recipientId, text) {
       id: recipientId,
     },
     message: {
-      text: text,
+      text: text.replace(/\\n/g, "\n"),
     },
   };
   await callSendAPI(messageData);
