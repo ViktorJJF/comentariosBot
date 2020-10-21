@@ -132,11 +132,7 @@ async function receivedComment(event) {
   let postResponses = [
     {
       postId: "103450344641549_145867757066474",
-      response: "Que fue loco",
-    },
-    {
-      postId: "103450344641549_182366933416556",
-      response: "Que fue loco",
+      response: "Testeando!!",
     },
   ];
   let parentId = event.parent_id;
@@ -144,30 +140,27 @@ async function receivedComment(event) {
   let commentId = event.comment_id;
   let senderId = event.from.id;
   let senderMessage = event.message;
-  let msg = "";
-  postResponses.map((postResponse) => {
-    if (postResponse.postId === postId && parentId === postId) {
+  if (postId === parentId) {
+    let post = postResponses.find(
+      (postResponse) => postResponse.postId === postId
+    );
+    if (post) {
       replyInsideComment(commentId, "Hemos mando un mensaje a tu inbox...");
       replyToComment(commentId, "Tu comentario fue: " + senderMessage);
+    } else {
+      replyInsideComment(
+        commentId,
+        "Tu comentario fue: " +
+          senderMessage +
+          "\nHemos mando un mensaje a tu inbox..."
+      );
+      replyToComment(
+        commentId,
+        "Gracias por comentar nuestra publicación...\\nTu comentario fue: " +
+          senderMessage
+      );
     }
-    return;
-  });
-
-  //handle Posts
-  // switch (postId) {
-  //   case "103450344641549_182366933416556":
-  //     msg =
-  //       "Bienvenido. Soy el asistente de Tesis para inteligentes 🤗. Puedes encontrar la plantilla de matriz de consistencia aquí https://drive.google.com/file/d/1wzo8UdNA0kuAZhwUpJ-qMpW79GThBM6V/view?usp=sharing";
-  //     await replyToComment(commentId, msg);
-  //     break;
-  //   default:
-  //     msg =
-  //       "Tu comentario fue: " +
-  //       senderMessage +
-  //       "\nMuchas gracias por comentar nuestras publicaciones";
-  //     await replyToComment(commentId, msg);
-  //     break;
-  // }
+  }
 }
 
 async function replyInsideComment(commentId, msg) {
