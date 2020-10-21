@@ -129,26 +129,52 @@ async function timeout(millis) {
 
 async function receivedComment(event) {
   console.log(event);
+  let postResponses = [
+    {
+      postId: "103450344641549_145867757066474",
+      response: "Que fue loco",
+    },
+    {
+      postId: "103450344641549_182366933416556",
+      response: "Que fue loco",
+    },
+  ];
+  let parentId = event.parent_id;
   let postId = event.post_id;
   let commentId = event.comment_id;
   let senderId = event.from.id;
   let senderMessage = event.message;
   let msg = "";
+  postResponses.map((postResponse) => {
+    if (postResponse.postId === postId && parentId === postId) {
+      replyInsideComment(commentId, "Hemos mando un mensaje a tu inbox...");
+      replyToComment(commentId, "Tu comentario fue: " + senderMessage);
+    }
+    return;
+  });
+
   //handle Posts
-  switch (postId) {
-    case "103450344641549_182366933416556":
-      msg =
-        "Bienvenido. Soy el asistente de Tesis para inteligentes 🤗. Puedes encontrar la plantilla de matriz de consistencia aquí https://drive.google.com/file/d/1wzo8UdNA0kuAZhwUpJ-qMpW79GThBM6V/view?usp=sharing";
-      await replyToComment(commentId, msg);
-      break;
-    default:
-      msg =
-        "Tu comentario fue: " +
-        senderMessage +
-        "\nMuchas gracias por comentar nuestras publicaciones";
-      await replyToComment(commentId, msg);
-      break;
-  }
+  // switch (postId) {
+  //   case "103450344641549_182366933416556":
+  //     msg =
+  //       "Bienvenido. Soy el asistente de Tesis para inteligentes 🤗. Puedes encontrar la plantilla de matriz de consistencia aquí https://drive.google.com/file/d/1wzo8UdNA0kuAZhwUpJ-qMpW79GThBM6V/view?usp=sharing";
+  //     await replyToComment(commentId, msg);
+  //     break;
+  //   default:
+  //     msg =
+  //       "Tu comentario fue: " +
+  //       senderMessage +
+  //       "\nMuchas gracias por comentar nuestras publicaciones";
+  //     await replyToComment(commentId, msg);
+  //     break;
+  // }
+}
+
+async function replyInsideComment(commentId, msg) {
+  var messageData = {
+    message: msg,
+  };
+  await callSendAPI(messageData, "/" + commentId + "/comments");
 }
 
 async function replyToComment(commentId, msg) {
@@ -551,11 +577,11 @@ function sendTypingOff(recipientId) {
  * get the message id in a response
  *
  */
-function callSendAPI(messageData) {
+function callSendAPI(messageData, endPoint = "/me/messages") {
   return new Promise((resolve, reject) => {
     request(
       {
-        uri: "https://graph.facebook.com/v6.0/me/messages",
+        uri: "https://graph.facebook.com/v6.0" + endPoint,
         qs: {
           access_token: config.FB_PAGE_TOKEN,
         },
@@ -601,7 +627,11 @@ async function receivedPostback(event) {
 
   var payload = event.postback.payload;
   let result;
+  console.log("el payload es: ", payload);
   switch (payload) {
+    case "tipos de investigacion":
+      sendTextMessage(senderId, "gaea");
+      break;
     default:
       //unindentified payload
       sendToDialogFlow(senderId, payload);
